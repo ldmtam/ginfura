@@ -1,7 +1,7 @@
 package ginfura
 
-// Web3Interface ...
-type Web3Interface interface {
+// IGinfura ...
+type IGinfura interface {
 	GetBlockNumber() (uint64, error)
 	ProtocolVersion() (string, error)
 	Call(txCallObj TransactionCall, blkParam string) (string, error)

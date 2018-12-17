@@ -10,20 +10,29 @@ import (
 	"strconv"
 )
 
-type Web3 struct {
+// Ginfura ...
+type Ginfura struct {
 	url    string
 	client *http.Client
 }
 
-// NewWeb3Instance return new instance of ethereum api.
-func NewWeb3Instance(network string, projectID string) *Web3 {
-	return &Web3{
-		url:    fmt.Sprintf("https://%s.infura.io/v3/%s", network, projectID),
+// NewGinfura return new instance of ginfura api.
+func NewGinfura(network string, projectID string) *Ginfura {
+	var url string
+
+	if projectID == "" {
+		url = fmt.Sprintf("https://%s.infura.io/", network)
+	} else {
+		url = fmt.Sprintf("https://%s.infura.io/v3/%s", network, projectID)
+	}
+
+	return &Ginfura{
+		url:    url,
 		client: &http.Client{},
 	}
 }
 
-func (e *Web3) GetBlockNumber() (uint64, error) {
+func (e *Ginfura) GetBlockNumber() (uint64, error) {
 	result := response{}
 
 	values := map[string]interface{}{
@@ -47,7 +56,7 @@ func (e *Web3) GetBlockNumber() (uint64, error) {
 	return blkNumber, nil
 }
 
-func (e *Web3) ProtocolVersion() (string, error) {
+func (e *Ginfura) ProtocolVersion() (string, error) {
 	result := response{}
 
 	values := map[string]interface{}{
@@ -76,7 +85,7 @@ func validateTxCall(txCallObj TransactionCall) bool {
 	return true
 }
 
-func (e *Web3) Call(txCallObj TransactionCall, blkParam string) (string, error) {
+func (e *Ginfura) Call(txCallObj TransactionCall, blkParam string) (string, error) {
 	result := response{}
 
 	if _, err := strconv.ParseUint(blkParam, 0, 64); err != nil && blkParam != "latest" && blkParam != "pending" && blkParam != "earliest" {
@@ -111,7 +120,7 @@ func (e *Web3) Call(txCallObj TransactionCall, blkParam string) (string, error) 
 	return result.Result, nil
 }
 
-func (e *Web3) GetGasPrice() (uint64, error) {
+func (e *Ginfura) GetGasPrice() (uint64, error) {
 	result := response{}
 
 	values := map[string]interface{}{
@@ -135,7 +144,7 @@ func (e *Web3) GetGasPrice() (uint64, error) {
 	return gasPrice, nil
 }
 
-func (e *Web3) GetBalance(address string) (uint64, error) {
+func (e *Ginfura) GetBalance(address string) (uint64, error) {
 	result := response{}
 
 	if !isHexAddress(address) {
@@ -163,7 +172,7 @@ func (e *Web3) GetBalance(address string) (uint64, error) {
 	return balance, nil
 }
 
-func (e *Web3) GetBlockByHash(blkHash string, showDetail bool) (Block, error) {
+func (e *Ginfura) GetBlockByHash(blkHash string, showDetail bool) (Block, error) {
 	result := blkInfoResp{}
 
 	values := map[string]interface{}{
@@ -185,7 +194,7 @@ func (e *Web3) GetBlockByHash(blkHash string, showDetail bool) (Block, error) {
 	return result.Result, nil
 }
 
-func (e *Web3) GetBlockTransactionCountByHash(blkHash string) (string, error) {
+func (e *Ginfura) GetBlockTransactionCountByHash(blkHash string) (string, error) {
 	result := response{}
 	values := map[string]interface{}{
 		"jsonrpc": "2.0",
@@ -206,7 +215,7 @@ func (e *Web3) GetBlockTransactionCountByHash(blkHash string) (string, error) {
 	return result.Result, nil
 }
 
-func (e *Web3) GetBlockTransactionCountByNumber(blkNumber string) (string, error) {
+func (e *Ginfura) GetBlockTransactionCountByNumber(blkNumber string) (string, error) {
 	result := response{}
 
 	if _, err := strconv.ParseUint(blkNumber, 0, 64); err != nil && blkNumber != "latest" && blkNumber != "pending" && blkNumber != "earliest" {
@@ -232,7 +241,7 @@ func (e *Web3) GetBlockTransactionCountByNumber(blkNumber string) (string, error
 	return result.Result, nil
 }
 
-func (e *Web3) GetCode(address, blockParam string) (string, error) {
+func (e *Ginfura) GetCode(address, blockParam string) (string, error) {
 	result := response{}
 
 	if !isHexAddress(address) {
@@ -262,7 +271,7 @@ func (e *Web3) GetCode(address, blockParam string) (string, error) {
 	return result.Result, nil
 }
 
-func (e *Web3) GetTransactionByBlockHashAndIndex(blkHash, index string) (Transaction, error) {
+func (e *Ginfura) GetTransactionByBlockHashAndIndex(blkHash, index string) (Transaction, error) {
 	result := txInfoResp{}
 
 	values := map[string]interface{}{
@@ -284,7 +293,7 @@ func (e *Web3) GetTransactionByBlockHashAndIndex(blkHash, index string) (Transac
 	return result.Result, nil
 }
 
-func (e *Web3) GetTransactionByBlockNumberAndIndex(blkNumber, index string) (Transaction, error) {
+func (e *Ginfura) GetTransactionByBlockNumberAndIndex(blkNumber, index string) (Transaction, error) {
 	result := txInfoResp{}
 
 	if _, err := strconv.ParseUint(blkNumber, 0, 64); err != nil && blkNumber != "latest" && blkNumber != "pending" && blkNumber != "earliest" {
@@ -310,7 +319,7 @@ func (e *Web3) GetTransactionByBlockNumberAndIndex(blkNumber, index string) (Tra
 	return result.Result, nil
 }
 
-func (e *Web3) GetTransactionByHash(txHash string) (Transaction, error) {
+func (e *Ginfura) GetTransactionByHash(txHash string) (Transaction, error) {
 	result := txInfoResp{}
 
 	values := map[string]interface{}{
@@ -332,7 +341,7 @@ func (e *Web3) GetTransactionByHash(txHash string) (Transaction, error) {
 	return result.Result, nil
 }
 
-func (e *Web3) GetTransactionCount(address, blkParams string) (string, error) {
+func (e *Ginfura) GetTransactionCount(address, blkParams string) (string, error) {
 	result := response{}
 
 	if !isHexAddress(address) {
@@ -362,7 +371,7 @@ func (e *Web3) GetTransactionCount(address, blkParams string) (string, error) {
 	return result.Result, nil
 }
 
-func (e *Web3) GetTransactionReceipt(txHash string) (TransactionReceipt, error) {
+func (e *Ginfura) GetTransactionReceipt(txHash string) (TransactionReceipt, error) {
 	result := txReceiptResp{}
 
 	values := map[string]interface{}{
@@ -384,7 +393,7 @@ func (e *Web3) GetTransactionReceipt(txHash string) (TransactionReceipt, error) 
 	return result.Result, nil
 }
 
-func (e *Web3) GetUncleByBlockHashAndIndex(blkHash, index string) (UncleBlock, error) {
+func (e *Ginfura) GetUncleByBlockHashAndIndex(blkHash, index string) (UncleBlock, error) {
 	result := uncleBlkResp{}
 
 	values := map[string]interface{}{
@@ -406,7 +415,7 @@ func (e *Web3) GetUncleByBlockHashAndIndex(blkHash, index string) (UncleBlock, e
 	return result.Result, nil
 }
 
-func (e *Web3) GetUncleByBlockNumberAndIndex(blkNumber, index string) (UncleBlock, error) {
+func (e *Ginfura) GetUncleByBlockNumberAndIndex(blkNumber, index string) (UncleBlock, error) {
 	result := uncleBlkResp{}
 
 	if _, err := strconv.ParseUint(blkNumber, 0, 64); err != nil && blkNumber != "latest" && blkNumber != "pending" && blkNumber != "earliest" {
@@ -432,7 +441,7 @@ func (e *Web3) GetUncleByBlockNumberAndIndex(blkNumber, index string) (UncleBloc
 	return result.Result, nil
 }
 
-func (e *Web3) GetUncleCountByBlockHash(blkHash string) (string, error) {
+func (e *Ginfura) GetUncleCountByBlockHash(blkHash string) (string, error) {
 	result := response{}
 
 	values := map[string]interface{}{
@@ -454,7 +463,7 @@ func (e *Web3) GetUncleCountByBlockHash(blkHash string) (string, error) {
 	return result.Result, nil
 }
 
-func (e *Web3) GetUncleCountByBlockNumber(blkNumber string) (string, error) {
+func (e *Ginfura) GetUncleCountByBlockNumber(blkNumber string) (string, error) {
 	result := response{}
 
 	if _, err := strconv.ParseUint(blkNumber, 0, 64); err != nil && blkNumber != "latest" && blkNumber != "pending" && blkNumber != "earliest" {
@@ -480,7 +489,7 @@ func (e *Web3) GetUncleCountByBlockNumber(blkNumber string) (string, error) {
 	return result.Result, nil
 }
 
-func (e *Web3) SendRawTransaction(rawTx string) (string, error) {
+func (e *Ginfura) SendRawTransaction(rawTx string) (string, error) {
 	result := response{}
 
 	values := map[string]interface{}{
