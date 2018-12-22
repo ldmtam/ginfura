@@ -6,7 +6,18 @@ import (
 
 // common errors
 var (
-	errNotEthereumAddress = errors.New("input is not an ethereum address")
+	errNotEthereumAddress             = errors.New("input is not an ethereum address")
+	errNotOpenWebsocketConnection     = errors.New("websocket connection is not yet opened")
+	errNotSubscribePendingTransaction = errors.New("pending transactions is not yet subscribed")
+	errAlreadySubscribe               = errors.New("already subscribe the topic")
+)
+
+// subscription types
+const (
+	NewHeads               = "newHeads"
+	Logs                   = "logs"
+	NewPendingTransactions = "newPendingTransactions"
+	Syncing                = "syncing"
 )
 
 // Block type of a block in ethereum blockchain
@@ -135,5 +146,29 @@ type txReceiptResp struct {
 type response struct {
 	Jsonrpc string `json:"jsonrpc"`
 	ID      int    `json:"id"`
+	Result  string `json:"result"`
+}
+
+//////////////// Websocket //////////////////
+type params struct {
+	Subscription string `json:"subscription"`
+	Result       string `json:"result"`
+}
+
+type txPendingResp struct {
+	JSONRPC string `json:"jsonrpc"`
+	Method  string `json:"method"`
+	Params  params `json:"params"`
+}
+
+type unsubscribeResp struct {
+	ID      int    `json:"id"`
+	JSONRPC string `json":"jsonrpc"`
+	Result  bool   `json:"result"`
+}
+
+type subscriptionResp struct {
+	ID      int    `json:"id"`
+	JSONRPC string `json:"jsonrpc"`
 	Result  string `json:"result"`
 }

@@ -1,7 +1,10 @@
 package ginfura
 
+import "context"
+
 // IGinfura ...
 type IGinfura interface {
+	// HTTP API
 	GetBlockNumber() (uint64, error)
 	ProtocolVersion() (string, error)
 	Call(txCallObj TransactionCall, blkParam string) (string, error)
@@ -21,4 +24,9 @@ type IGinfura interface {
 	GetUncleCountByBlockHash(blkHash string) (string, error)
 	GetUncleCountByBlockNumber(blkNumber string) (string, error)
 	SendRawTransaction(rawTx string) (string, error)
+
+	// Websocket API
+	Open() error
+	Close()
+	SubscribePendingTransaction(ctx context.Context)
 }
