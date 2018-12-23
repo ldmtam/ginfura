@@ -10,6 +10,7 @@ var (
 	errNotOpenWebsocketConnection     = errors.New("websocket connection is not yet opened")
 	errNotSubscribePendingTransaction = errors.New("pending transactions is not yet subscribed")
 	errNotSubscribeNewHeads           = errors.New("new heads is not yet subscribed")
+	errNotSubscribeLogs               = errors.New("logs event is not yet subscribed")
 	errAlreadySubscribe               = errors.New("already subscribe the topic")
 )
 
@@ -199,4 +200,31 @@ type newHeadsResp struct {
 	JSONRPC string        `json:"jsonrpc"`
 	Method  string        `json:"method"`
 	Params  newHeadParams `json:"params"`
+}
+
+type logsResult struct {
+	Address          string   `json:"address"`
+	BlockHash        string   `json:"blockHash"`
+	BlockNumber      string   `json:"blockNumber"`
+	Data             string   `json:"data"`
+	LogIndex         string   `json:"logIndex"`
+	Topics           []string `json:"topics"`
+	TransactionHash  string   `json:"transactionHash"`
+	TransactionIndex string   `json:"transactionIndex"`
+}
+
+type logsParams struct {
+	Subscription string     `json:"subscription"`
+	Result       logsResult `json:"result"`
+}
+
+type logsResp struct {
+	JSONRPC string     `json:"jsonrpc"`
+	Method  string     `json:"method"`
+	Params  logsParams `json:"params"`
+}
+
+type LogRequestParams struct {
+	Address []string `json:"address"`
+	Topics  []string `json:"topics"`
 }

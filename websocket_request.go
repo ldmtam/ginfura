@@ -27,6 +27,7 @@ func (g *Ginfura) Open() error {
 		return err
 	}
 	g.wsClient = c
+	log.Println("Websocket connection established")
 
 	return nil
 }
@@ -99,6 +100,40 @@ func (g *Ginfura) SubscribeNewHeads(ctx context.Context) (<-chan newHeadResult, 
 	return newHeadsQueue, nil
 }
 
+func (g *Ginfura) SubscribeLogs(ctx context.Context, params *LogRequestParams) (<-chan logsResult, error) {
+	if g.wsClient == nil {
+		return nil, errNotOpenWebsocketConnection
+	}
+
+	g.mu.Lock()
+	if _, ok := g.subscriptions[Logs]; ok {
+		return nil, errAlreadySubscribe
+	}
+	g.mu.Unlock()
+
+	logsQueue := make(chan logsResult, 128)
+
+	values := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"method":  "eth_subscribe",
+		"params":  []interface{}{"logs", params},
+		"id":      1,
+	}
+	jsonValue, err := json.Marshal(values)
+	if err != nil {
+		return nil, err
+	}
+	err = g.wsClient.WriteMessage(websocket.TextMessage, jsonValue)
+	if err != nil {
+		return nil, err
+	}
+
+	wg.Add(1)
+	go listenForLogs(ctx, g, logsQueue)
+
+	return logsQueue, nil
+}
+
 func (g *Ginfura) unsubscribePendingTransaction() (bool, error) {
 	if g.wsClient == nil {
 		return false, errNotOpenWebsocketConnection
@@ -136,7 +171,9 @@ func (g *Ginfura) unsubscribePendingTransaction() (bool, error) {
 			return false, err
 		}
 		if resp.Result == true {
+			g.mu.Lock()
 			delete(g.subscriptions, NewPendingTransactions)
+			g.mu.Unlock()
 		}
 		return resp.Result, nil
 	}
@@ -179,7 +216,54 @@ func (g *Ginfura) unsubscribeNewHeads() (bool, error) {
 			return false, err
 		}
 		if resp.Result == true {
+			g.mu.Lock()
 			delete(g.subscriptions, NewHeads)
+			g.mu.Unlock()
+		}
+		return resp.Result, nil
+	}
+}
+
+func (g *Ginfura) unsubscribeLogs() (bool, error) {
+	if g.wsClient == nil {
+		return false, errNotOpenWebsocketConnection
+	}
+
+	g.mu.Lock()
+	subscriptionID, ok := g.subscriptions[Logs]
+	g.mu.Unlock()
+	if ok == false {
+		return false, errNotSubscribeLogs
+	}
+
+	values := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"method":  "eth_unsubscribe",
+		"params":  []interface{}{subscriptionID},
+		"id":      1,
+	}
+	jsonValue, err := json.Marshal(values)
+	if err != nil {
+		return false, err
+	}
+	err = g.wsClient.WriteMessage(websocket.TextMessage, jsonValue)
+	if err != nil {
+		return false, err
+	}
+
+	resp := unsubscribeResp{}
+	for {
+		_, message, err := g.wsClient.ReadMessage()
+		if err != nil {
+			return false, err
+		}
+		if err = json.Unmarshal(message, &resp); err != nil {
+			return false, err
+		}
+		if resp.Result == true {
+			g.mu.Lock()
+			delete(g.subscriptions, Logs)
+			g.mu.Unlock()
 		}
 		return resp.Result, nil
 	}
@@ -259,6 +343,45 @@ func listenForNewHeads(ctx context.Context, g *Ginfura, newHeadsQueue chan<- new
 					return
 				}
 				newHeadsQueue <- resp.Params.Result
+			}
+		}
+	}
+}
+
+func listenForLogs(ctx context.Context, g *Ginfura, logsQueue chan<- logsResult) {
+	resp := logsResp{}
+	i := 0
+	for {
+		select {
+		case <-ctx.Done():
+			log.Println("Unsubscribing logs event")
+			g.unsubscribeLogs()
+			wg.Done()
+			return
+		default:
+			_, message, err := g.wsClient.ReadMessage()
+			if err != nil {
+				log.Println("error:", err)
+				return
+			}
+			if i == 0 {
+				subResp := subscriptionResp{}
+				if err = json.Unmarshal(message, &subResp); err != nil {
+					log.Println("error:", err)
+					return
+				}
+
+				g.mu.Lock()
+				g.subscriptions[Logs] = subResp.Result
+				g.mu.Unlock()
+
+				i++
+			} else {
+				if err = json.Unmarshal(message, &resp); err != nil {
+					log.Println("error:", err)
+					return
+				}
+				logsQueue <- resp.Params.Result
 			}
 		}
 	}
