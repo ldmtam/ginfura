@@ -9,6 +9,7 @@ var (
 	errNotEthereumAddress             = errors.New("input is not an ethereum address")
 	errNotOpenWebsocketConnection     = errors.New("websocket connection is not yet opened")
 	errNotSubscribePendingTransaction = errors.New("pending transactions is not yet subscribed")
+	errNotSubscribeNewHeads           = errors.New("new heads is not yet subscribed")
 	errAlreadySubscribe               = errors.New("already subscribe the topic")
 )
 
@@ -150,15 +151,15 @@ type response struct {
 }
 
 //////////////// Websocket //////////////////
-type params struct {
+type txPendingParams struct {
 	Subscription string `json:"subscription"`
 	Result       string `json:"result"`
 }
 
 type txPendingResp struct {
-	JSONRPC string `json:"jsonrpc"`
-	Method  string `json:"method"`
-	Params  params `json:"params"`
+	JSONRPC string          `json:"jsonrpc"`
+	Method  string          `json:"method"`
+	Params  txPendingParams `json:"params"`
 }
 
 type unsubscribeResp struct {
@@ -171,4 +172,31 @@ type subscriptionResp struct {
 	ID      int    `json:"id"`
 	JSONRPC string `json:"jsonrpc"`
 	Result  string `json:"result"`
+}
+
+type newHeadResult struct {
+	Difficulty       string `json:"difficulty"`
+	ExtraData        string `json:"extraData"`
+	GasLimit         string `json:"gasLimit"`
+	GasUsed          string `json:"gasUsed"`
+	LogsBloom        string `json:"logsBloom"`
+	Miner            string `json:"miner"`
+	Nonce            string `json:"nonce"`
+	Number           string `json:"number"`
+	ParentHash       string `json:"parentHash"`
+	ReceiptRoot      string `json:"receiptRoot"`
+	Sha3Uncles       string `json:"sha3Uncles"`
+	StateRoot        string `json:"stateRoot"`
+	Timestamp        string `json:"timestamp"`
+	TransactionsRoot string `json:"transactionsRoot"`
+}
+type newHeadParams struct {
+	Result       newHeadResult `json:"result"`
+	Subscription string        `json:"subscription"`
+}
+
+type newHeadsResp struct {
+	JSONRPC string        `json:"jsonrpc"`
+	Method  string        `json:"method"`
+	Params  newHeadParams `json:"params"`
 }
