@@ -72,15 +72,10 @@ func (e *Ginfura) Call(txCallObj TransactionCall, blkParam string) (string, erro
 		return "", errors.New("Must define `to` field")
 	}
 
-	txCallJSON, err := json.Marshal(txCallObj)
-	if err != nil {
-		return "", err
-	}
-
 	values := map[string]interface{}{
 		"jsonrpc": "2.0",
 		"method":  "eth_call",
-		"params":  []interface{}{txCallJSON, blkParam},
+		"params":  []interface{}{txCallObj, blkParam},
 		"id":      1,
 	}
 	jsonValue, _ := json.Marshal(values)
