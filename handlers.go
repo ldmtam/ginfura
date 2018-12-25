@@ -3,26 +3,32 @@ package ginfura
 import (
 	"fmt"
 	"net/http"
-	"sync"
 
 	"github.com/gorilla/websocket"
+	"github.com/orcaman/concurrent-map"
 )
+
+type subscription struct {
+	conn           *websocket.Conn
+	subscriptionID string
+}
 
 // Ginfura ...
 type Ginfura struct {
-	url           string
-	wsURL         string
-	client        *http.Client
-	wsClient      *websocket.Conn
-	subscriptions map[string]string // Subscription Type => Subscription ID.
-	mu            *sync.Mutex
+	// Http connection
+	url    string
+	client *http.Client
+
+	// Websocket connection
+	wsURL           string
+	subscriptionMap cmap.ConcurrentMap // SubscriptionType => subscription
 }
 
 // NewGinfura return new instance of ginfura api.
-func NewGinfura(network string, projectID string) (*Ginfura, error) {
+func NewGinfura(network string, projectID string) *Ginfura {
 	var url string
 	var wsURL string
-	subscriptions := make(map[string]string)
+	subsMap := cmap.New()
 
 	if projectID == "" {
 		url = fmt.Sprintf("https://%s.infura.io/", network)
@@ -33,11 +39,9 @@ func NewGinfura(network string, projectID string) (*Ginfura, error) {
 	}
 
 	return &Ginfura{
-		url:           url,
-		wsURL:         wsURL,
-		client:        &http.Client{},
-		wsClient:      nil,
-		subscriptions: subscriptions,
-		mu:            new(sync.Mutex),
-	}, nil
+		url:             url,
+		wsURL:           wsURL,
+		client:          &http.Client{},
+		subscriptionMap: subsMap,
+	}
 }

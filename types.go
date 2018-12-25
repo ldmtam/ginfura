@@ -16,10 +16,10 @@ var (
 
 // subscription types
 const (
-	NewHeads               = "newHeads"
-	Logs                   = "logs"
-	NewPendingTransactions = "newPendingTransactions"
-	Syncing                = "syncing"
+	NewHead               = "newHead"
+	NewLog                = "newLog"
+	NewPendingTransaction = "newPendingTransaction"
+	Syncing               = "syncing"
 )
 
 // Block type of a block in ethereum blockchain
